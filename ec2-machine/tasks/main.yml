@@ -1,0 +1,42 @@
+---
+# create a security group for the vpc
+- name: create ec2 security group
+  ec2_group:
+      vpc_id: vpc-082397aef62d0965b
+      region: "{{ region }}"
+      name: ansible-ec2-sg
+      description: security group with all traffic allow
+      rules:
+       - proto: tcp
+         ports:
+         - 80
+         cidr_ip: 0.0.0.0/0
+         rule_desc: allow all on port 80
+  register: sg_info
+  
+- debug:
+    msg:  "{{ sg_info.group_id }}"
+
+# tasks file for ec2-machine
+- name: launching AWS instance using Ansible
+  ec2:
+      key_name: "{{ key_name }}" 
+      instance_type: "{{ instance_type }}"
+      instance_tags:
+         Name: "{{ instance_name }}"
+      image: "{{ img }}"
+      group_id: "{{ sg_info.group_id }}"
+      region: "{{ region }}"
+      count_tag: 
+         Name: "{{ instance_name }}" 
+      exact_count: "{{ n }}"
+      vpc_subnet_id: "{{ subnet }}" 
+      assign_public_ip: yes
+
+# creating a new S3 bucket
+
+- name: Create a bucket, in the singapore region
+  aws_s3:
+    bucket: ajustoragebuckkhbsacsakhbcmsacbsajcinae
+    mode: create
+    region: "{{ region }}"
