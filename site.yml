@@ -1,0 +1,5 @@
+---
+- name: Ansible role
+  hosts: localhost
+  roles:
+   - ec2-machine

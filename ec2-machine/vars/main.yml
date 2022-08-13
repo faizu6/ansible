@@ -1,0 +1,9 @@
+---
+# vars file for ec2-machine
+   key_name: new-keypair
+   instance_type: t2.micro
+   img: ami-0ff89c4ce7de192ea
+   region: ap-southeast-1
+   instance_name: deployed-by-ansible
+   n: 1 
+   subnet: subnet-06590531a75b621e2
