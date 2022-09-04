@@ -1,0 +1,115 @@
+---
+
+
+# tasks file for vpc
+# create a vpc
+   - ec2_vpc_net:
+        name: ansible-vpc
+        state: present
+        cidr_block: 10.0.0.0/16
+        region: ap-southeast-1
+
+     register: vpc_info
+
+   - debug:
+        msg: "{{ vpc_info.vpc.id }}"
+
+# create a private subnet
+#   - ec2_vpc_subnet:
+#       state: present
+#       cidr: 10.0.1.0/24
+#       region: ap-southeast-1
+#       az: ap-southeast-1a
+#       vpc_id: "{{ vpc_info.vpc.id }}"
+#       resource_tags:
+#          Name: pvt-subnet
+#     register: pvtsubnet_info
+#   - debug:
+#         msg: "{{ pvtsubnet_info.subnet.id }}"
+
+# create a public subnet
+   - ec2_vpc_subnet:
+         state: present
+         cidr: 10.0.6.0/24
+         region: ap-southeast-1
+         az: ap-southeast-1a
+         vpc_id: "{{ vpc_info.vpc.id }}"
+         resource_tags:
+           Name: pub-subnet
+         wait: yes
+     register: pubsubnet_info
+   - debug:
+         msg: "{{ pubsubnet_info.subnet.id }}"
+
+# create a public subnet2
+   - ec2_vpc_subnet:
+         state: present
+         cidr: 10.0.4.0/24
+         region: ap-southeast-1
+         az: ap-southeast-1b
+         vpc_id: "{{ vpc_info.vpc.id }}"
+         resource_tags:
+           Name: pub-subnet2
+         wait: yes
+     register: pubsubnet2_info
+   - debug:
+         msg: "{{ pubsubnet2_info.subnet.id }}"
+         
+# create an IGW
+   - ec2_vpc_igw:
+         vpc_id: "{{ vpc_info.vpc.id }}"
+         region: ap-southeast-1
+         resource_tags:
+           Name: IGW
+     register: igw_info
+   - debug:
+         msg: "{{ igw_info.gateway_id }}"
+
+# create a route table for public subnet
+   - ec2_vpc_route_table:
+         vpc_id: "{{ vpc_info.vpc.id }}"
+         region: ap-southeast-1
+         subnets:
+           - "{{ pubsubnet_info.subnet.id}}"
+         routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw_info.gateway_id  }}"
+         resource_tags:
+            Name: pub_RT
+
+# create a route table for public subnet2
+   - ec2_vpc_route_table:
+         vpc_id: "{{ vpc_info.vpc.id }}"
+         region: ap-southeast-1
+         subnets:
+           - "{{ pubsubnet2_info.subnet.id}}"
+         routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw_info.gateway_id  }}"
+         resource_tags:
+            Name: pub_RT2
+
+
+# create a NAT-Gateway for private subnet and attach to subnet on fly
+#   - ec2_vpc_nat_gateway:
+#         state: present
+#         subnet_id: "{{ pubsubnet_info.subnet.id }}"
+#         region: ap-southeast-1
+#         wait: yes
+#         resource_tags:
+#           Name: nat-gateway
+#     register: nat_info
+#   - debug:
+#         msg: "{{ nat_info.nat_gateway_id }}"
+
+# create a route table for private subnet and attach to NAT_gateway on fly
+#   - ec2_vpc_route_table:
+#         vpc_id: "{{ vpc_info.vpc.id }}"
+#         region: ap-southeast-1
+#         subnets:
+#           - "{{ pvtsubnet_info.subnet.id }}"
+#         routes:
+#          - dest: 0.0.0.0/0
+#            gateway_id: "{{ nat_info.nat_gateway_id }}"
+#         resource_tags:
+#            Name: pvt_RT

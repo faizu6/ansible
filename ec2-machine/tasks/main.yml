@@ -2,7 +2,7 @@
 # create a security group for the vpc
 - name: create ec2 security group
   ec2_group:
-      vpc_id: vpc-082397aef62d0965b
+      vpc_id: "{{ vpc_info.vpc.id }}"
       region: "{{ region }}"
       name: ansible-ec2-sg
       description: security group with all traffic allow
@@ -20,23 +20,39 @@
 # tasks file for ec2-machine
 - name: launching AWS instance using Ansible
   ec2:
-      key_name: "{{ key_name }}" 
+      key_name: "{{ key_name }}"
       instance_type: "{{ instance_type }}"
       instance_tags:
          Name: "{{ instance_name }}"
       image: "{{ img }}"
       group_id: "{{ sg_info.group_id }}"
       region: "{{ region }}"
-      count_tag: 
-         Name: "{{ instance_name }}" 
+      count_tag:
+         Name: "{{ instance_name }}"
       exact_count: "{{ n }}"
-      vpc_subnet_id: "{{ subnet }}" 
+      vpc_subnet_id: "{{ pubsubnet_info.subnet.id }}"
       assign_public_ip: yes
+      wait: yes
+      user_data: |
+               #!/bin/sh
+               yum update -y
+               yum install -y httpd.x86_64
+               systemctl start httpd.service
+               systemctl enable httpd.service
+               echo "Hello World from $(hostname -f)" > /var/www/html/index.html
+  register: ec2_info
+
+- debug:
+    msg: "{{ ec2_info.tagged_instances[0].id }}"
+    
+- debug:
+    msg: "{{ ec2_info.tagged_instances[1].id }}"
 
 # creating a new S3 bucket
 
-- name: Create a bucket, in the singapore region
-  aws_s3:
-    bucket: ajustoragebuckkhbsacsakhbcmsacbsajcinae
-    mode: create
-    region: "{{ region }}"
+
+#- name: Create a bucket, in the singapore region
+#  aws_s3:
+#    bucket: ajustoragebuckkhbsacsakhbcmsacbsajcinae
+#    mode: create
+#    region: "{{ region }}"

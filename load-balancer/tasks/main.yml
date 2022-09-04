@@ -1,0 +1,41 @@
+---
+# tasks file for load-balancer
+- name: Create a target group with instance targets
+  elb_target_group:
+    name: ansible-TG
+    protocol: HTTP
+    port: 80
+    vpc_id: "{{ vpc_info.vpc.id }}"
+    region: "{{ region }}"
+    health_check_protocol: HTTP
+    health_check_path: /
+    successful_response_codes: 200
+    targets:
+      - Id: "{{ ec2_info.tagged_instances[0].id }}"
+        Port: 80
+      - Id: "{{ ec2_info.tagged_instances[1].id }}"
+        Port: 80
+    state: present
+  
+
+
+# create an application load balancer
+- elb_application_lb:
+    name: ansible-alb
+    region: "{{ region }}"
+    subnets:
+      - "{{ pubsubnet_info.subnet.id }}"
+      - "{{ pubsubnet2_info.subnet.id }}"
+    security_groups:
+      - "{{ sg_info.group_id }}"
+    scheme: internet-facing
+    listeners:
+      - Protocol: HTTP 
+        Port: 80
+        DefaultActions:
+          - Type: forward
+            TargetGroupName: ansible-TG
+    state: present
+  register: alb_info
+- debug:
+    msg: "{{ alb_info.dns_name }}"
