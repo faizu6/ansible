@@ -1,0 +1,9 @@
+---
+
+- Create a new infra 
+  hosts: all
+  roles:
+    - vpc 
+    - ec2-machine
+    - load balancer
+    - route53
