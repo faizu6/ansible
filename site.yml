@@ -1,6 +1,6 @@
 ---
 
-- Create a new infra 
+- Name: Create a new infra 
   hosts: all
   roles:
     - vpc 
